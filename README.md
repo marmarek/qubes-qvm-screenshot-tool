@@ -5,6 +5,8 @@ This tool provide funcionality to make screenshots at Qubes dom0 and upload it a
 This tool must be places and used only at **dom0** <br>
 No need to upload something to TemplateVM.
 
+Need example? All screenshots on this tutorial done by this tool :)
+
 # How to use it
 
 You will be asked for actions by GUI prompt.`qvm-screenshot-tool` support `ksnapshot` (KDE5 tool) and `scrot` console tool to make screenshots which is not available by default at dom0, but it can by simple installed to it with one command `sudo qubes-dom0-update scrot`<br> 
