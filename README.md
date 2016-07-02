@@ -62,9 +62,9 @@ Installation
 
 ## WARNING! ALWAYS REVIEW ANY CODE THAT YOU UPLOAD TO DOM0 BEFORE DO THAT!
 First, you **must** review the code, before upload it to dom0 ! Always do that if you are uploading code to dom0 from some 
-other source then official qubes repositary !!!
+other source and other way then Qubes Team recommend it !!!
 
-Discussion thread on the qubes maillist about the code:
+Discussion thread on the qubes maillist about the code:<br>
 https://groups.google.com/forum/#!topic/qubes-users/dcsRRPf0Fxk
 
 
