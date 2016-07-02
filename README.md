@@ -60,7 +60,7 @@ Features
 Installation
 ----
 
-## WARNING! REVIEW THE CODE!
+## WARNING! ALWAYS REVIEW ANY CODE THAT YOU UPLOAD TO DOM0 BEFORE DO THAT!
 First, you **must** review the code, before upload it to dom0 ! Always do that if you are uploading code to dom0 from some 
 other source then official qubes repositary !!!
 
