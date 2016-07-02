@@ -2,11 +2,14 @@
 
 The _**qvm-screenshot-tool**_ is screenshot tool for [Qubes OS](https://qubes-os.org/)<br>
 This tool provide funcionality to make screenshots at Qubes dom0 and upload it automaticaly to AppVM and to imgurl service thought this AppVm if you want it.
-Tool must be stored used at **dom0**
+Tool must be places and used only at **dom0** <br>
+No need to upload something to TemplateVM
 
 # How to use it
 
 You will be promted for action. Now `qvm-screenshot-tool` support `ksnapshot` (KDE5 tool) and `scrot` tool to make screenshots. 
+![screenshot png](https://i.imgur.com/h3h1dMW.png)
+
 Qubes Team plane to remove KDE5 from Qubes by default, therefor I highly recommend to use it with `scrot`. 
 
 ### How to use it with Ksnapshot
