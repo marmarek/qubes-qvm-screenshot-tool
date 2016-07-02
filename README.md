@@ -60,6 +60,14 @@ Features
 Installation
 ----
 
+## WARNING! REVIEW THE CODE!
+First, you **must** review the code, before upload it to dom0 ! Always do that if you are uploading code to dom0 from some 
+other source then official qubes repositary !!!
+
+Discussion thread on the qubes maillist about the code:
+https://groups.google.com/forum/#!topic/qubes-users/dcsRRPf0Fxk
+
+
 ### Manual install
 
 Just save `qvm-screenshot-tool.sh` as a file to any AppVM. Then copy it to `dom0` with the following command at dom0 terminal:
