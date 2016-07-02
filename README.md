@@ -7,7 +7,7 @@ No need to upload something to TemplateVM
 
 # How to use it
 
-You will be promted for action. Now `qvm-screenshot-tool` support `ksnapshot` (KDE5 tool) and `scrot` tool to make screenshots. 
+You will be promted for action. Now `qvm-screenshot-tool` support `ksnapshot` (KDE5 tool) and `scrot` tool to make screenshots.<br> 
 ![screenshot png](https://i.imgur.com/h3h1dMW.png)
 
 Qubes Team plane to remove KDE5 from Qubes by default, therefor I highly recommend to use it with `scrot`. 
