@@ -5,112 +5,57 @@
 # zenity at dom0 and at AppVM (already exists by default at fedora and dom0)
 #
 
-# Plans: 1) delayed screenshots 
-# 2) select multi regions and make one image from all of them to upload
-# 3) upload any image from dom0 after select it
-# 4) editor of screenshots before upload
 
-version="0.1beta"
+version="0.2beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
+TEMPEDITORFILE="$DOM0_SHOTS_DIR/0000-SAVE-EDITED-SHOT-HERE-TO-PROCESS.png"
 
 UPLOADHELPER=$(cat <<'EOFFILE'
 #!/bin/bash
 # Eva Dog Star imgurl uploader
-
 imgur_anon_id="ea6c0ef2987808e"
-
 # check arguments
 if [ $# == 0 ]; then
    echo "[ERROR] No file specified" >&2
    exit 16
 fi
-
 # check curl is available
 type curl >/dev/null 2>/dev/null || {
    echo "[ERROR] Couln't find curl, which is required at AppVM." >&2
    exit 17
 }
-
 file="$1"
 logfile="$2"   
-
    # check file exists
    if [ ! -f "$file" ]; then
       echo "[ERROR] file '$file' doesn't exist at AppVM" >&2
       exit 18
    fi
-
    response="$(curl --compressed --connect-timeout "5" -m "150" --retry "1" -fsSL --stderr - -H "Authorization: Client-ID ${imgur_anon_id}" -F "image=@$file" https://api.imgur.com/3/image)"
-
    if egrep -q '"success":\s*true' <<<"${response}"; then
        img_id="$(egrep -o '"id":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4)"
        img_ext="$(egrep -o '"link":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4 | rev | cut -d "." -f 1 | rev)" # "link" itself has ugly '\/' escaping and no https!
        del_id="$(egrep -o '"deletehash":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4)"
-
        imgurl="https://i.imgur.com/${img_id}.${img_ext}"
        imgdeleteurl="https://imgur.com/delete/${del_id}"
-
       echo -e "Image url:\n$imgurl\n\nDelete image url: \n$imgdeleteurl\n\n \nQubes Screenshot Tool - EvaDogStar 2016" > $logfile
-
       echo "[success] imgurl: $imgurl" >&2   
       echo "[success] delete url: $imgdeleteurl" >&2
-
    else # upload failed
        err_msg="$(egrep -o '"error":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4)"
        test -z "${err_msg}" && err_msg="${response}"
        echo "[ERROR] $err_msg"
        echo "[RESPONSE] $response" 
-
      echo -e "Error: \n\n$err_msg \n\nImgurl Server response: \n\n$response\n\n\n \nQubes Screenshot Tool - EvaDogStar 2016" > $logfile       
        #echo ${err_msg}
    fi
-
 (which xclip &>/dev/null && echo -n "$imgurl" | xclip -selection clipboard ) || echo "[NOTE] no xclip at AppVM"
       
-
 EOFFILE
 )
-#kdialog --msgbox "dsadasd"
-#exit 1
-#kdialog --inputbox "Url:" "fasffasf asfsaf af asf saf sdag sdg s"  "dasdas" "fgdsgsad"
-#exit 1
 
-# vai_ksnapshootxxx()
-# {
-#   # setGrabMode notes: 0=full-screen, 1=window, 2=region
-#   #kstart -iconify ksnapshot && sleep 0.2
-#   ksnapshot &
-#   sleep 1
-#   while [ "$PID" == "" ]; do PID="$(pgrep ksnapshot)"; done
-#   program="org.kde.ksnapshot-${PID}"
-# ####  qdbus $program /KSnapshot setGrabMode "$1"
-# #####qdbus $program /KSnapshot setTime 0
-# ####kdialog --radiolist "Continue upload process? Confirm only if you are ready" continue continue continue --default continue --title "$program" --nograb --noxim  
-
-# zenity --question --text "Move this mindow away and make screenshot. When you will be ready to upload image click on OK button."
-
-#   [[ $1 -eq 2 ]] && qdbus $program /KSnapshot slotGrab
-#   [[ $1 -eq 4 ]] && qdbus $program /KSnapshot slotGrab  
-#   [[ $1 -eq 2 ]] && sleep 4
-#   #sleep 5
-#   #kdialog --msgbox "click yes when you done ?"
-
-#   # confirm dialog for region selection tool
-# ###  [[ $1 -eq 2 ]] && kdialog --radiolist "Continue upload process? Confirm only if you are ready" continue continue continue --default continue --title "$program" --nograb --noxim
-  
-#   #qdbus $program /KSnapshot setURL "$2"
-#   #qdbus $program /KSnapshot slotSave
-# PID="$(pgrep -n ksnapshot)"
-#    program="org.kde.ksnapshot-${PID}"
-#   qdbus $program /KSnapshot slotGrab  
-#   sleep 2
-
-#   qdbus $program /KSnapshot save $2
-#   echo "$2"
-#   qdbus $program /KSnapshot exit
-# }
 checkscrot()
 {  
    (which scrot &>/dev/null ) || { 
@@ -144,12 +89,19 @@ start_ksnapshoot()
 }
 
 
+# check dependencies
  (which zenity &>/dev/null ) || { 
-    scrotnomes="[FATAL] no \"zenity\" tool at dom0 installeted use: \n\nsudo qubed-dom0-update zenity command to add it first"
-    echo "$scrotnomes" 
+    warn="[FATAL] no \"zenity\" tool at dom0 installeted use: \n\nsudo qubed-dom0-update zenity command to add it first"
+    echo "$warn" 
     exit 1 
  }
 
+ (which display &>/dev/null ) || { 
+    warn="[EXIT] no \"ImageMagic\" (display) package at dom0 installeted use: \n\nsudo qubed-dom0-update ImageMagic \n\ncommand to add it first"
+    echo "$scrotnomes" 
+    zenity --info --modal --text "$warn" &>/dev/null
+    exit 1 
+ }
 
 program="`basename $0`"
 shotslist=""
@@ -192,12 +144,9 @@ while true; do
   fi
 
 
-   [[ $mode_quick -eq 1 ]] && exit 1
    shotslist="$shotname"
    #shotslist="${shotslist}${shotname}:"
    break
-
-   # [[ $mode_multi -eq 1 ]] && kdialog --yesno "Other shot ?" || break
 done
 
 
@@ -205,6 +154,7 @@ done
  ans=$(zenity --list --modal --width=200 --height=290 --text "Screenshot saved at dom0 \nWhat do you want to do next?\nSelect or multiselect some options:" --checklist --column "Pick" --column "Options" \
    FALSE Exit \
    FALSE "Upload to AppVM only" \
+   FALSE "Edit Screenshot" \
    FALSE "Upload to Imgurl" \
    FALSE "Start Nautilus at AppVM" \
    FALSE "Keep screenshot at dom0"
@@ -213,7 +163,9 @@ done
 
 [[ X"$ans" == X"" ]] && exit 1
 
+mode_exit=0
 mode_onlyupload=0
+mode_edit=0
 mode_nautilus=0
 mode_imgurl=0
 mode_not_delete_screen_at_dom=0
@@ -223,14 +175,46 @@ IFS='|'; for val in $ans;
 do 
 #echo "variable: $val and $1"
 case $val in
-  'Exit') echo "[+] Good Bye"; exit 1 ;;
+  'Exit') mode_exit=1;exit 1 ;;
   'Upload to AppVM only') mode_onlyupload=1;  ;;
+  'Edit Screenshot') mode_edit=1;  ;;
   'Upload to Imgurl') mode_imgurl=1;  ;;
   'Start Nautilus at AppVM') mode_nautilus=1;  ;;
   'Keep screenshot at dom0') mode_not_delete_screen_at_dom=1;  ;;
  # -r) mode_region=1;  ;;
   *) echo "Never Good Bye!"; exit 1 ;;
 esac done
+
+
+# editing screenshot with IM
+if [ $mode_edit -eq 1 ]; then
+  echo "[-] now you can edit (anotate, hide some area, crop) your shot with ImageMagic. When you will be ready click Save then Exit from IM and we will continue"
+
+  echo "" > $TEMPEDITORFILE
+  display "$DOM0_SHOTS_DIR/$shotname"
+
+  # check if user save his image changes to special SAVE slot that we monitor
+ size=$(stat --printf="%s" $TEMPEDITORFILE )
+ # if [ $size -ge 20 ]; then
+ #   # user stored new image
+ # fi  
+  if [ $size -ge 20 ]; then
+     # user stored new image
+     echo "[+] changed screenshot found. Continue with it"
+     mv $TEMPEDITORFILE $DOM0_SHOTS_DIR/$shotname
+   else
+    #clianup tempfile
+    rm $TEMPEDITORFILE 
+  fi  
+
+
+  sleep 1
+  echo "[-] thanks for editing. Now we continue."  
+fi
+
+if [ $mode_edit -eq 1 ]; then
+  echo "[+] Good Bye!"
+fi
 
 IFS=$IFSDEFAULT
 choiceappvm=`ls $QUBES_DOM0_APPVMS |sed 's/\([^ ]*\)/FALSE \1 /g'`
@@ -281,4 +265,3 @@ else
 fi
 
 echo "[*] Dom0 say Good Bye"
-
