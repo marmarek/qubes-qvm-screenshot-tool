@@ -7,6 +7,13 @@ No need to upload something to TemplateVM.
 
 Need example? All screenshots on this tutorial done by this tool :)
 
+# Changelog
+
+0.2 beta - Now the tool support editing images at dom0. You can aanotane any text to screenshot, crop image, composite, draw the lines and use filters! Read how to do that below.
+
+![screenshot png](https://i.imgur.com/UmDHZ8j.png)
+
+
 # How to use it
 
 You will be asked for actions by GUI prompt.`qvm-screenshot-tool` support `ksnapshot` (KDE5 tool) and `scrot` console tool to make screenshots which is not available by default at dom0, but it can by simple installed to it with one command `sudo qubes-dom0-update scrot`<br> 
@@ -36,6 +43,18 @@ All other options on first dialog use `scrot` tool to make screenshots.
 0. If `nautilus` mode was selected it will be started with `$PATH` opened. If `xcopy` is installeted. Url will be copy to clickboard.
 
 ![screenshot png](https://i.imgur.com/r7IT8TK.png)
+
+### How to use the editon
+
+You can edit scrrenshot before upload it to img url or move them to AppVM.
+
+0. Select edit mode (and upload move if need to also upload)
+0. You will see image on the screen. Click on it to get menu. 
+0. Edit the image. if you do something wrong clock "Ctrl-Z" to undo changes.
+0. When you are ready to upload. Go to File -> Save and choose predefined possition **0000-SAVE-EDITED-SHOT-HERE-TO-PROCESS.png** to save it to (or we will continue with not edited screenshot)
+0. Just Quit from the editor and tool will continue to move screenshot to AppVM or uploading.
+
+![screenshot png](https://i.imgur.com/qPPmF7X.png)
 
 
 Descriptions of the settings 
@@ -101,6 +120,7 @@ Tested at 3.2rc1
 * curl at Linux AppVM
 * zenity at dom0 and at AppVM. 
 * scrot at dom0 <i>(recommended) or ksnapshot</i>
+* ImageMagick (already at dom0 preinstalleted)
 * xclip at AppVM <i>(only need if you want also copy url to clipboard automaticaly att AppVM)</i>
 
 OS support
