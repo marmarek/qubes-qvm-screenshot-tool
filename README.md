@@ -51,7 +51,7 @@ You can edit scrrenshot before upload it to img url or move them to AppVM.
 0. Select edit mode (and upload move if need to also upload)
 0. You will see image on the screen. Click on it to get menu. 
 0. Edit the image. if you do something wrong clock "Ctrl-Z" to undo changes.
-0. When you are ready to upload. Go to File -> Save and choose predefined possition **0000-SAVE-EDITED-SHOT-HERE-TO-PROCESS.png** to save it to (or we will continue with not edited screenshot)
+0. When you are ready to upload. Go to File -> Save and choose predefined possition<br> **0000-SAVE-EDITED-SHOT-HERE-TO-PROCESS.png**<br>to save it to (or we will continue with not edited screenshot)
 0. Just Quit from the editor and tool will continue to move screenshot to AppVM or uploading.
 
 ![screenshot png](https://i.imgur.com/qPPmF7X.png)
