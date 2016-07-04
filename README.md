@@ -13,6 +13,8 @@ Need example? All screenshots on this tutorial done by this tool :)
 
 ![screenshot png](https://i.imgur.com/UmDHZ8j.png)
 
+### Known bugs
+0.1 beta support multi upload (you can start multiple copies if the tool at ones). This version also support then, but "editor" mode will only work on single mode. Do not launch two editors at the time before it will not be fixed. 
 
 # How to use it
 
