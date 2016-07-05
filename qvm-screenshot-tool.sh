@@ -1,13 +1,12 @@
-
 #!/bin/sh
 
 # Take screenshot in Qubes Dom0, auto copy to AppVM, upload to imgurl service
 # Dependencies: scrot at dom0 (sudo qubes-dom0-update scrot) 
 # zenity at dom0 and at AppVM (already exists by default at fedora and dom0)
-#
 
+# (c) EvaDogStar 2016 
 
-version="0.2beta"
+version="0.3beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
@@ -60,8 +59,8 @@ EOFFILE
 checkscrot()
 {  
    (which scrot &>/dev/null ) || { 
-      scrotnomes="[EXIT] no \"scrot\" tool at dom0 installed use: \n\nsudo qubed-dom0-update scrot \n\ncommand to add it first"
-      echo "$scrotnomes" 
+      scrotnomes="[EXIT] no \"scrot\" tool at dom0 installed use: \n\nsudo qubes-dom0-update scrot \n\ncommand to add it first"
+      printf "$scrotnomes\n" 
       zenity --info --modal --text "$scrotnomes" &>/dev/null
       exit 1 
    }
@@ -85,21 +84,21 @@ start_ksnapshoot()
   PID="$(pgrep ksnapshot)"
   program="org.kde.ksnapshot-${PID}"
   qdbus $program /KSnapshot save $2
-  echo "ksnap save: $2"
+  printf "[+] ksnapshot saved at: $2\n"
   qdbus $program /KSnapshot exit
 }
 
 
 # check dependencies
  (which zenity &>/dev/null ) || { 
-    warn="[FATAL] no \"zenity\" tool at dom0 installeted use: \n\nsudo qubed-dom0-update zenity command to add it first"
-    echo "$warn" 
+    warn="[FATAL] no \"zenity\" tool at dom0 installeted use: \n\nsudo qubes-dom0-update zenity command to add it first"
+    printf "$warn\n"
     exit 1 
  }
 
  (which display &>/dev/null ) || { 
-    warn="[EXIT] no \"ImageMagic\" (display) package at dom0 installeted use: \n\nsudo qubed-dom0-update ImageMagic \n\ncommand to add it first"
-    echo "$scrotnomes" 
+    warn="[EXIT] no \"ImageMagic\" (display) package at dom0 installeted use: \n\nsudo qubes-dom0-update ImageMagic \n\ncommand to add it first"
+    printf "$scrotnomes\n" 
     zenity --info --modal --text "$warn" &>/dev/null
     exit 1 
  }
@@ -121,7 +120,7 @@ while true; do
 #   echo $ans
 
   if [ X"$ans" == X"Ksnapshot" ]; then
-   echo "[+] starting ksnapshot..."
+   printf "[+] starting ksnapshot..."
    start_ksnapshoot 4 $DOM0_SHOTS_DIR/$shotname || break
   elif [ X"$ans" == X"Region or Window" ]; then
      checkscrot || break
@@ -227,7 +226,12 @@ appvm=$(zenity --list --modal  --width=200 --height=390  --text "Select destinat
 if [ X"$appvm" != X"" ]; then
 
    echo "[-] start AppVM: $appvm"
-   qvm-run -a $appvm "mkdir -p $APPVM_SHOTS_DIR"
+   destdir=$(qvm-run -a --pass-io $appvm "xdg-user-dir PICTURES")
+   if [[ "$destdir" =~ ^/home/user* ]]; then
+    APPVM_SHOTS_DIR=$destdir
+   fi
+
+   qvm-run $appvm "mkdir -p $APPVM_SHOTS_DIR"
 
    if [ $mode_nautilus -eq 1 ]; then
       echo "[-] running nautilus in AppVM"
