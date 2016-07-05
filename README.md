@@ -8,7 +8,7 @@ No need to upload something to TemplateVM.
 Need example? All screenshots on this tutorial done by this tool :)
 
 # Changelog
-
+0.3 beta - fixed some minor issues with user folders on different languages 
 0.2 beta - Now the tool support editing images at dom0. You can aanotane any text to screenshot, crop image, composite, draw the lines and use filters! Read how to do that below.
 
 ![screenshot png](https://i.imgur.com/UmDHZ8j.png)
