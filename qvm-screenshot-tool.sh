@@ -6,10 +6,16 @@
 
 # (c) EvaDogStar 2016 
 
-version="0.3beta"
+version="0.4beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
+
+rightdom0dir=$(xdg-user-dir PICTURES)
+if [[ "$rightdom0dir" =~ ^/home/user* ]]; then
+DOM0_SHOTS_DIR=$rightdom0dir
+fi
+
 TEMPEDITORFILE="$DOM0_SHOTS_DIR/0000-SAVE-EDITED-SHOT-HERE-TO-PROCESS.png"
 
 UPLOADHELPER=$(cat <<'EOFFILE'
