@@ -141,3 +141,7 @@ How to contribute
 * Submit feature request
 * Make a pull request
 * If you like this tool, you can donate Qubes OS developers https://www.qubes-os.org/donate/#bitcoin and maybe send me notification at `qubes-users` maillist that you are happy with this tool and you do that, because of it :)
+
+#### Plans
+
+* Show last uploaded urls (log) if the window was closed.
