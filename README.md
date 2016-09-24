@@ -8,10 +8,10 @@ No need to upload something to TemplateVM.
 Need example? All screenshots on this tutorial done by this tool :)
 
 # Changelog
-0.5 beta - added option to reopen closed dialog (imgurl upload dialog) again at AppVM. "Kshaphoot" removed if it's not installeted at the Qubes system. 
-0.4 beta - fixed some minor issues with user "pictures" dir name on dom0.  (multilingual) 
-0.3 beta - fixed some minor issues with user "pictures" dir name on destination VM. (multilingual) 
-0.2 beta - Now the tool support editing images at dom0. You can aanotane any text to screenshot, crop image, composite, draw the lines and use filters! Read how to do that below.
+0.5 beta - added option to reopen closed dialog (imgurl upload dialog) again at AppVM. "Kshaphoot" removed if it's not installeted at the Qubes system. <br>
+0.4 beta - fixed some minor issues with user "pictures" dir name on dom0.  (multilingual) <br>
+0.3 beta - fixed some minor issues with user "pictures" dir name on destination VM. (multilingual) <br>
+0.2 beta - Now the tool support editing images at dom0. You can aanotane any text to screenshot, crop image, composite, draw the lines and use filters! Read how to do that below.<br>
 
 ![screenshot png](https://i.imgur.com/UmDHZ8j.png)
 
