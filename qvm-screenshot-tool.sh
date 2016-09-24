@@ -6,10 +6,12 @@
 
 # (c) EvaDogStar 2016 
 
-version="0.4beta"
+version="0.5beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
+IMGURL_LOG="imgurl.log"
+LAST_ACTION_LOG_CONFIG="$HOME/.config/qvm-screenshot-lastaction.cfg"
 
 rightdom0dir=$(xdg-user-dir PICTURES)
 if [[ "$rightdom0dir" =~ ^/home/user* ]]; then
@@ -39,7 +41,7 @@ logfile="$2"
       echo "[ERROR] file '$file' doesn't exist at AppVM" >&2
       exit 18
    fi
-   response="$(curl --compressed --connect-timeout "5" -m "150" --retry "1" -fsSL --stderr - -H "Authorization: Client-ID ${imgur_anon_id}" -F "image=@$file" https://api.imgur.com/3/image)"
+   response="$(curl --compressed --connect-timeout "7" -m "250" --retry "1" -fsSL --stderr - -H "Authorization: Client-ID ${imgur_anon_id}" -F "image=@$file" https://api.imgur.com/3/image)"
    if egrep -q '"success":\s*true' <<<"${response}"; then
        img_id="$(egrep -o '"id":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4)"
        img_ext="$(egrep -o '"link":\s*"[^"]+"' <<<"${response}" | cut -d "\"" -f 4 | rev | cut -d "." -f 1 | rev)" # "link" itself has ugly '\/' escaping and no https!
@@ -61,6 +63,36 @@ logfile="$2"
       
 EOFFILE
 )
+
+write_last_action_config()
+{
+touch "$LAST_ACTION_LOG_CONFIG"
+cat <<EOF > $LAST_ACTION_LOG_CONFIG
+# last app vm used to upload image
+appvm=$appvm
+logfile=$logfile
+EOF
+}
+
+read_last_action_config()
+{
+
+[ -e $LAST_ACTION_LOG_CONFIG ] && source $LAST_ACTION_LOG_CONFIG
+
+open_imgulr_upload_dialog_at_destination_appvm
+
+if [ "$appvm" == "" ]; then
+      printf "Last action not available \n" 
+      zenity --info --modal --text "Last action not available. Please, upload some image with this AppVM first." &>/dev/null
+fi
+
+exit 1
+}
+
+open_imgulr_upload_dialog_at_destination_appvm()
+{
+   qvm-run $appvm "zenity --text-info --width=500 --height=180 --modal --filename=$logfile --text Ready"
+}
 
 checkscrot()
 {  
@@ -117,10 +149,19 @@ while true; do
    d=`date +"%Y-%m-%d-%H%M%S"`
    shotname=$d.png
 
+# check ksnapshoot exists
+  ksnapshottxt="FALSE Ksnapshot"
+
+  (which ksnapshot &>/dev/null ) || { 
+     ksnapshottxt=""
+  }
+
+
    ans=$(zenity --list --modal --text "Choose capture mode of capturing \n Use:" --radiolist --column "Pick" --column "Option" \
-   FALSE Ksnapshot \
+   $ksnapshottxt \
    TRUE "Region or Window" \
    FALSE "Fullscreen" \
+   FALSE "Open last dialog" \
    ) 
 
 #   echo $ans
@@ -136,6 +177,10 @@ while true; do
      checkscrot || break
      echo "[+] capturing fullscreen desktop"      
      scrot -b $DOM0_SHOTS_DIR/$shotname || break
+  elif [ X"$ans" == X"Open last dialog" ]; then
+     echo "[+] opening last dialog at AppVM with uploaded urls if exists"
+     read_last_action_config || break
+     exit 1
   else
      echo "You must select some mode to continue" && exit 1
   fi
@@ -261,14 +306,19 @@ if [ X"$appvm" != X"" ]; then
 #      echo $UPLOADHELPER \
 #          | qvm-run --pass-io $appvm "echo $UPLOADHELPER > $APPVM_SHOTS_DIR/autouplodertemp.sh"
    uploadername='evauploadermgur.sh'
-   logfile="$APPVM_SHOTS_DIR/imgurl.log"
+   logfile="$APPVM_SHOTS_DIR/$IMGURL_LOG"
    echo "$UPLOADHELPER" | qvm-run --pass-io $appvm "cat > $APPVM_SHOTS_DIR/$uploadername"
    qvm-run --pass-io $appvm "chmod +x $APPVM_SHOTS_DIR/$uploadername"
    RESULT="$(qvm-run --pass-io $appvm "$APPVM_SHOTS_DIR/$uploadername $APPVM_SHOTS_DIR/$shot $logfile")"
    qvm-run $appvm "rm $APPVM_SHOTS_DIR/$uploadername"
    #qvm-run $appvm "gedit $logfile" 
-   qvm-run $appvm "zenity --text-info --width=500 --height=180 --modal --filename=$logfile --text Ready" 
+   
+   open_imgulr_upload_dialog_at_destination_appvm
+
    echo $RESULT
+
+   # write AppVM name and log file at AppVM to the dom0 config to open it again
+   write_last_action_config
 
    #done
 else
