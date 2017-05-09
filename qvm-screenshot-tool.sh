@@ -4,9 +4,9 @@
 # Dependencies: scrot at dom0 (sudo qubes-dom0-update scrot) 
 # zenity at dom0 and at AppVM (already exists by default at fedora and dom0)
 
-# (c) EvaDogStar 2016 
+# (c) EvaDogStar 2017
 
-version="0.5beta"
+version="0.6"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
@@ -156,13 +156,24 @@ while true; do
      ksnapshottxt=""
   }
 
+# choose what to capture from command line
+ans=""
+if [ "$1" = "--region-only" ] ; then
+  ans="Region or Window"
+  shift
+elif [ "$1" = "--fullscreen" ]; then
+  ans="Fullscreen"
+  shift
+fi
 
+if [ "$ans" = "" ] ; then
    ans=$(zenity --list --modal --text "Choose capture mode of capturing \n Use:" --radiolist --column "Pick" --column "Option" \
    $ksnapshottxt \
    TRUE "Region or Window" \
    FALSE "Fullscreen" \
    FALSE "Open last dialog" \
    ) 
+fi
 
 #   echo $ans
 
