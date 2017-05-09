@@ -107,9 +107,7 @@ Then give it execute privilegies at dom0 terminal:
 chmod +x /home/user/Pictures/qvm-screenshot-tool.sh
 ```
 
-Now, you can setup hotkeys. Go to System -> Keyboard settings and bind it to your default shortcut for `PrintScreen` key or add to e.g. `Ctrl+PrintScreen` combination..
-
-Also you can start ot from dom0 terminal to get full verbose output:
+Of course, you can start it for testing purposes from command line:
 
 ```shell
 ./qvm-screenshot-tool.sh
@@ -121,6 +119,9 @@ It's possible to skip first dialog and make choice from command like with `--reg
 ./qvm-screenshot-tool.sh --region-only
 ./qvm-screenshot-tool.sh --fullscreen
 ```
+
+Now, you are ready to setup it on some hotkey combination. Go to `System -> Keyboard settings` and bind the script to your favorite shortcut `PrintScreen` key or to e.g. `Ctrl+PrintScreen` combination.
+
 
 
 Dependencies
