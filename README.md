@@ -8,6 +8,7 @@ No need to upload something to TemplateVM.
 Need example? All screenshots on this tutorial done by this tool :)
 
 # Changelog
+0.7 beta - Now Qubes Screenshot Tool support command line arguments. You can setup some keybinding to skip all dailogs and quickly do the same job. e.g. `qvm-screenshot-tool.sh --region-only --imgurl --virtualmachine APPNAME`
 0.6 - Now possible to skip first dialog and make choice from command line: `--region-only` or `--fullscreen` 
 0.5 beta - added option to reopen closed dialog (imgurl upload dialog) again at AppVM. "Kshaphoot" removed if it's not installeted at the Qubes system. <br>
 0.4 beta - fixed some minor issues with user "pictures" dir name on dom0.  (multilingual) <br>
@@ -82,6 +83,7 @@ Features
 * Last upload log with imgurl link and **deletion link** is stored at AppVM: ~/Pictures/imgurl.log
 * Automatic image deletion from dom0 (you can switch it off on dialog)
 * Urls notifications are where from you can copy urls to clipboard
+* NEW! Support command line argumens to skip dialogs and quikly to the same job.
 
 Installation
 ----

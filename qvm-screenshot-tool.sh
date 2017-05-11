@@ -6,7 +6,7 @@
 
 # (c) EvaDogStar 2017
 
-version="0.6"
+version="0.7beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
 APPVM_SHOTS_DIR=/home/user/Pictures
 QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
@@ -63,6 +63,25 @@ logfile="$2"
       
 EOFFILE
 )
+
+print_help()
+{
+    echo "Usage: $(basename "$0") OPTIONS [[--imgurl|--vm-nautilus] --vm APPVMNAME]"
+    echo "  -h | --help"    
+    echo "  FIRST DIALOG OPTIONS:"
+    echo "  -r | --region-only"
+    echo "  --fullscreen"
+    echo "  --lastdialog"
+    echo "  SECOND DIALOG OPTIONS:"
+    echo "  --upload-to-appvm-only"    
+    echo "  --imgurl (request -vm NAME)"
+    echo "  --vm-nautilus (request -vm NAME)"
+    echo "  --keep-screenshot-at-dom0"
+    echo "  SECOND DIALOG OPTIONS:"
+    echo "  -vm | --virtualmachine NAME" 
+    exit 1
+}
+
 
 write_last_action_config()
 {
@@ -156,15 +175,79 @@ while true; do
      ksnapshottxt=""
   }
 
-# choose what to capture from command line
+# PROCESS COMMAND LINE ARGS
 ans=""
-if [ "$1" = "--region-only" ] ; then
-  ans="Region or Window"
-  shift
-elif [ "$1" = "--fullscreen" ]; then
-  ans="Fullscreen"
-  shift
-fi
+anssecond=""
+appvm=""
+
+## GETTING OPTIONS START
+declare -a TEMPARR
+
+ while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+        -h|--help)
+        print_help
+        exit 1
+        ;;
+        -r|--region-only)
+          ans="Region or Window"
+        ;;
+        -f|--fullscreen)
+          ans="Fullscreen"
+        ;;
+        -l|--lastdialog)
+         ans="Open last dialog"
+        ;;
+        -vm|--vm|--virtualmachine)
+        shift
+        appvm="$1"
+        ;;
+        --upload-to-appvm-only)
+         TEMPARR=("${TEMPARR[@]}" "Upload to AppVM only")  # Add an element
+        ;;
+        --editscreenshot)
+         TEMPARR=("${TEMPARR[@]}" "Edit Screenshot")  # Add an element
+        ;;
+        --imgurl)
+         TEMPARR=("${TEMPARR[@]}" "Upload to Imgurl")  # Add an element
+        ;;
+        --vm-nautilus)
+         TEMPARR=("${TEMPARR[@]}" "Start Nautilus at AppVM")  # Add an element
+        ;;
+        --keep-screenshot-at-dom0)
+         TEMPARR=("${TEMPARR[@]}" "Keep screenshot at dom0")  # Add an element
+        ;;
+
+        ## This is an arg=value type option. Will catch -o=value or --output-file=value
+        ##-o=*|--output-file=*)
+        ## No need to shift here since the value is part of the same string
+        ##OUTPUTFILE="${key#*=}"
+        ##;;
+        *)
+        # Do whatever you want with extra options
+        echo "Unknown option '$key'"
+        exit 1
+        ;;
+    esac
+    # Shift after checking all the cases to get the next option
+    shift
+done
+
+# implode an array with params
+anssecond="$(printf "%s)|(" "${TEMPARR[@]}")"
+anssecond="${anssecond%)|(}"
+
+unset TEMPARR
+## GETTING OPTIONS END 
+
+# if [ "$1" = "--region-only" ] ; then
+#   ans="Region or Window"
+#   shift
+# elif [ "$1" = "--fullscreen" ]; then
+#   ans="Fullscreen"
+#   shift
+#fi
 
 if [ "$ans" = "" ] ; then
    ans=$(zenity --list --modal --text "Choose capture mode of capturing \n Use:" --radiolist --column "Pick" --column "Option" \
@@ -212,18 +295,19 @@ fi
 done
 
 
-  
- ans=$(zenity --list --modal --width=200 --height=290 --text "Screenshot saved at dom0 \nWhat do you want to do next?\nSelect or multiselect some options:" --checklist --column "Pick" --column "Options" \
+if [ "$anssecond" = "" ] ; then
+ anssecond=$(zenity --list --modal --width=200 --height=290 --text "Screenshot saved at dom0 \nWhat do you want to do next?\nSelect or multiselect some options:" --checklist --column "Pick" --column "Options" \
    FALSE Exit \
    FALSE "Upload to AppVM only" \
    FALSE "Edit Screenshot" \
    FALSE "Upload to Imgurl" \
    FALSE "Start Nautilus at AppVM" \
    FALSE "Keep screenshot at dom0"
-   ) 
-   #echo "xxx $ans xxx"
+   )
+fi
+   #echo "xxx $anssecond xxx"
 
-[[ X"$ans" == X"" ]] && exit 1
+[[ X"$anssecond" == X"" ]] && exit 1
 
 mode_exit=0
 mode_onlyupload=0
@@ -233,7 +317,7 @@ mode_imgurl=0
 mode_not_delete_screen_at_dom=0
 
 IFSDEFAULT=$IFS
-IFS='|'; for val in $ans; 
+IFS='|'; for val in $anssecond; 
 do 
 #echo "variable: $val and $1"
 case $val in
@@ -281,9 +365,10 @@ fi
 IFS=$IFSDEFAULT
 choiceappvm=`ls $QUBES_DOM0_APPVMS |sed 's/\([^ ]*\)/FALSE \1 /g'`
 #appvm=`kdialog --radiolist "Select destination AppVM" $choice --title "$program"`
+if [ "$appvm" = "" ] ; then
 appvm=$(zenity --list --modal  --width=200 --height=390  --text "Select destination AppVM (unix based):" --radiolist --column "Pick" --column "AppVM" $choiceappvm ) 
+fi
 #echo $appvm
-
 
 if [ X"$appvm" != X"" ]; then
 
