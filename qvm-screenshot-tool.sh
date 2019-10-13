@@ -392,7 +392,7 @@ if [ X"$appvm" != X"" ]; then
    cat $DOM0_SHOTS_DIR/$shot \
       |qvm-run --pass-io $appvm "cat > $APPVM_SHOTS_DIR/$shot"
 
-   [[ $mode_not_delete_screen_at_dom -eq 1 ]] && rm -f $DOM0_SHOTS_DIR/$shot && echo "[+] Screen at dom0 deleted $DOM0_SHOTS_DIR/$shot"
+   [[ $mode_not_delete_screen_at_dom -eq 0 ]] && rm -f $DOM0_SHOTS_DIR/$shot && echo "[+] Screen at dom0 deleted $DOM0_SHOTS_DIR/$shot"
    [[ $mode_onlyupload -eq 1 ]] && exit 1
 
 
