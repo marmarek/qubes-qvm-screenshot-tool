@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Take screenshot in Qubes Dom0, auto copy to AppVM, upload to imgurl service
 # Dependencies: scrot at dom0 (sudo qubes-dom0-update scrot) 
@@ -66,6 +66,7 @@ EOFFILE
 
 print_help()
 {
+    echo "qvm-screenshot-tool version $version"
     echo "Usage: $(basename "$0") OPTIONS [[--imgurl|--vm-nautilus] --vm APPVMNAME]"
     echo "  -h | --help"    
     echo "  FIRST DIALOG OPTIONS:"
@@ -86,7 +87,7 @@ print_help()
 write_last_action_config()
 {
 touch "$LAST_ACTION_LOG_CONFIG"
-cat <<EOF > $LAST_ACTION_LOG_CONFIG
+cat <<EOF > "$LAST_ACTION_LOG_CONFIG"
 # last app vm used to upload image
 appvm=$appvm
 logfile=$logfile
@@ -96,7 +97,8 @@ EOF
 read_last_action_config()
 {
 
-[ -e $LAST_ACTION_LOG_CONFIG ] && source $LAST_ACTION_LOG_CONFIG
+# shellcheck disable=SC1090
+[ -e "$LAST_ACTION_LOG_CONFIG" ] && source "$LAST_ACTION_LOG_CONFIG"
 
 open_imgulr_upload_dialog_at_destination_appvm
 
@@ -110,14 +112,14 @@ exit 1
 
 open_imgulr_upload_dialog_at_destination_appvm()
 {
-   qvm-run $appvm "zenity --text-info --width=500 --height=180 --modal --filename=$logfile --text Ready"
+   qvm-run "$appvm" "zenity --text-info --width=500 --height=180 --modal --filename=$logfile --text Ready"
 }
 
 checkscrot()
 {  
-   (which scrot &>/dev/null ) || { 
+   command -v scrot >/dev/null || { 
       scrotnomes="[EXIT] no \"scrot\" tool at dom0 installed use: \n\nsudo qubes-dom0-update scrot \n\ncommand to add it first"
-      printf "$scrotnomes\n" 
+      printf "%s\n" "$scrotnomes" 
       zenity --info --modal --text "$scrotnomes" &>/dev/null
       exit 1 
    }
@@ -140,38 +142,38 @@ start_ksnapshoot()
   # ksnap pid changed after using region selection tool
   PID="$(pgrep ksnapshot)"
   program="org.kde.ksnapshot-${PID}"
-  qdbus $program /KSnapshot save $2
-  printf "[+] ksnapshot saved at: $2\n"
-  qdbus $program /KSnapshot exit
+  qdbus "$program" /KSnapshot save "$2"
+  printf "[+] ksnapshot saved at: %s\n" "$2"
+  qdbus "$program" /KSnapshot exit
 }
 
 
 # check dependencies
- (which zenity &>/dev/null ) || { 
+ command -v zenity >/dev/null || { 
     warn="[FATAL] no \"zenity\" tool at dom0 installeted use: \n\nsudo qubes-dom0-update zenity command to add it first"
-    printf "$warn\n"
+    printf "%s\n" "$warn"
     exit 1 
  }
 
- (which display &>/dev/null ) || { 
+ command -v display >/dev/null || { 
     warn="[EXIT] no \"ImageMagic\" (display) package at dom0 installeted use: \n\nsudo qubes-dom0-update ImageMagic \n\ncommand to add it first"
-    printf "$scrotnomes\n" 
+    printf "%s\n" "$scrotnomes"
     zenity --info --modal --text "$warn" &>/dev/null
     exit 1 
  }
 
-program="`basename $0`"
+program="$(basename "$0")"
 shotslist=""
 
-mkdir -p $DOM0_SHOTS_DIR ||exit 1
+mkdir -p "$DOM0_SHOTS_DIR" ||exit 1
 while true; do
-   d=`date +"%Y-%m-%d-%H%M%S"`
-   shotname=$d.png
+   d=$(date +"%Y-%m-%d-%H%M%S")
+   shotname="$d.png"
 
 # check ksnapshoot exists
   ksnapshottxt="FALSE Ksnapshot"
 
-  (which ksnapshot &>/dev/null ) || { 
+  command -v ksnapshot >/dev/null || { 
      ksnapshottxt=""
   }
 
@@ -262,15 +264,15 @@ fi
 
   if [ X"$ans" == X"Ksnapshot" ]; then
    printf "[+] starting ksnapshot..."
-   start_ksnapshoot 4 $DOM0_SHOTS_DIR/$shotname || break
+   start_ksnapshoot 4 "$DOM0_SHOTS_DIR/$shotname" || break
   elif [ X"$ans" == X"Region or Window" ]; then
      checkscrot || break
      echo "[+] capturing window, click on it to select"
-     scrot -s -b $DOM0_SHOTS_DIR/$shotname || break
+     scrot -s -b "$DOM0_SHOTS_DIR/$shotname" || break
   elif [ X"$ans" == X"Fullscreen" ]; then
      checkscrot || break
      echo "[+] capturing fullscreen desktop"      
-     scrot -b $DOM0_SHOTS_DIR/$shotname || break
+     scrot -b "$DOM0_SHOTS_DIR/$shotname" || break
   elif [ X"$ans" == X"Open last dialog" ]; then
      echo "[+] opening last dialog at AppVM with uploaded urls if exists"
      read_last_action_config || break
@@ -284,7 +286,7 @@ fi
       echo "[+] Success at dom0. Screenshot saved at $DOM0_SHOTS_DIR/$shotname" || break
   else
    echo "[ERROR] Something has gone wrong and screenshot has not been saved at dom0."
-   $(zenity --info --modal --text "Something has gone wrong and screenshot has NOT been saved at dom0") 
+   zenity --info --modal --text "Something has gone wrong and screenshot has NOT been saved at dom0"
    exit 12
   fi
 
@@ -320,8 +322,8 @@ IFSDEFAULT=$IFS
 IFS='|'; for val in $anssecond; 
 do 
 #echo "variable: $val and $1"
-case $val in
-  'Exit') mode_exit=1;exit 1 ;;
+case "$val" in
+  'Exit') mode_exit=1; ;;
   'Upload to AppVM only') mode_onlyupload=1;  ;;
   'Edit Screenshot') mode_edit=1;  ;;
   'Upload to Imgurl') mode_imgurl=1;  ;;
@@ -331,26 +333,29 @@ case $val in
   *) echo "Never Good Bye!"; exit 1 ;;
 esac done
 
+if [ "$mode_exit" -eq 1 ]; then
+    exit 0
+fi
 
 # editing screenshot with IM
-if [ $mode_edit -eq 1 ]; then
+if [ "$mode_edit" -eq 1 ]; then
   echo "[-] editing screenshot started. Click on the image to get the edit menu. Use the tool. When you will be ready save the screenshot to predefined place. Then Exit from IM to continue"
 
-  echo "" > $TEMPEDITORFILE
+  echo "" > "$TEMPEDITORFILE"
   display "$DOM0_SHOTS_DIR/$shotname"
 
   # check if user save his image changes to special SAVE slot that we monitor
- size=$(stat --printf="%s" $TEMPEDITORFILE )
+ size=$(stat --printf="%s" "$TEMPEDITORFILE" )
  # if [ $size -ge 20 ]; then
  #   # user stored new image
  # fi  
-  if [ $size -ge 20 ]; then
+  if [ "$size" -ge 20 ]; then
      # user stored new image
      echo "[+] changed screenshot found. Continue with it"
-     mv $TEMPEDITORFILE $DOM0_SHOTS_DIR/$shotname
+     mv "$TEMPEDITORFILE" "$DOM0_SHOTS_DIR/$shotname"
    else
     #clianup tempfile
-    rm $TEMPEDITORFILE 
+    rm "$TEMPEDITORFILE"
   fi  
 
 
@@ -358,14 +363,15 @@ if [ $mode_edit -eq 1 ]; then
   echo "[-] thanks for editing. Now we continue."  
 fi
 
-if [ $mode_edit -eq 1 ]; then
+if [ "$mode_edit" -eq 1 ]; then
   echo "[+] Good Bye!"
 fi
 
 IFS=$IFSDEFAULT
-choiceappvm=`ls $QUBES_DOM0_APPVMS |sed 's/\([^ ]*\)/FALSE \1 /g'`
+choiceappvm=$(ls $QUBES_DOM0_APPVMS |sed 's/\([^ ]*\)/FALSE \1 /g')
 #appvm=`kdialog --radiolist "Select destination AppVM" $choice --title "$program"`
 if [ "$appvm" = "" ] ; then
+# shellcheck disable=SC2086
 appvm=$(zenity --list --modal  --width=200 --height=390  --text "Select destination AppVM (unix based):" --radiolist --column "Pick" --column "AppVM" $choiceappvm ) 
 fi
 #echo $appvm
@@ -373,26 +379,26 @@ fi
 if [ X"$appvm" != X"" ]; then
 
    echo "[-] start AppVM: $appvm"
-   destdir=$(qvm-run -a --pass-io $appvm "xdg-user-dir PICTURES")
-   if [[ "$destdir" =~ ^/home/user* ]]; then
-    APPVM_SHOTS_DIR=$destdir
+   untrusted_destdir=$(qvm-run -a --pass-io "$appvm" "xdg-user-dir PICTURES")
+   if [[ "$untrusted_destdir" =~ ^/home/user* ]]; then
+    # XXX
+    APPVM_SHOTS_DIR=$untrusted_destdir
    fi
 
-   qvm-run $appvm "mkdir -p $APPVM_SHOTS_DIR"
+   qvm-run "$appvm" "mkdir -p $APPVM_SHOTS_DIR"
 
    if [ $mode_nautilus -eq 1 ]; then
       echo "[-] running nautilus in AppVM"
-      qvm-run $appvm "nautilus $APPVM_SHOTS_DIR"
+      qvm-run "$appvm" "nautilus $APPVM_SHOTS_DIR"
       sleep 1
    fi
 
    shot=$shotslist
 
    echo "[-] copying screenshot to $APPVM_SHOTS_DIR/$shot"
-   cat $DOM0_SHOTS_DIR/$shot \
-      |qvm-run --pass-io $appvm "cat > $APPVM_SHOTS_DIR/$shot"
+   qvm-run --pass-io "$appvm" "cat > \"$APPVM_SHOTS_DIR/$shot\"" < "$DOM0_SHOTS_DIR/$shot"
 
-   [[ $mode_not_delete_screen_at_dom -eq 0 ]] && rm -f $DOM0_SHOTS_DIR/$shot && echo "[+] Screen at dom0 deleted $DOM0_SHOTS_DIR/$shot"
+   [[ $mode_not_delete_screen_at_dom -eq 0 ]] && rm -f "$DOM0_SHOTS_DIR/$shot" && echo "[+] Screen at dom0 deleted $DOM0_SHOTS_DIR/$shot"
    [[ $mode_onlyupload -eq 1 ]] && exit 1
 
 
@@ -403,15 +409,15 @@ if [ X"$appvm" != X"" ]; then
 #          | qvm-run --pass-io $appvm "echo $UPLOADHELPER > $APPVM_SHOTS_DIR/autouplodertemp.sh"
    uploadername='evauploadermgur.sh'
    logfile="$APPVM_SHOTS_DIR/$IMGURL_LOG"
-   echo "$UPLOADHELPER" | qvm-run --pass-io $appvm "cat > $APPVM_SHOTS_DIR/$uploadername"
-   qvm-run --pass-io $appvm "chmod +x $APPVM_SHOTS_DIR/$uploadername"
-   RESULT="$(qvm-run --pass-io $appvm "$APPVM_SHOTS_DIR/$uploadername $APPVM_SHOTS_DIR/$shot $logfile")"
-   qvm-run $appvm "rm $APPVM_SHOTS_DIR/$uploadername"
+   echo "$UPLOADHELPER" | qvm-run --pass-io "$appvm" "cat > $APPVM_SHOTS_DIR/$uploadername"
+   qvm-run --pass-io "$appvm" "chmod +x $APPVM_SHOTS_DIR/$uploadername"
+   RESULT="$(qvm-run --pass-io "$appvm" "$APPVM_SHOTS_DIR/$uploadername $APPVM_SHOTS_DIR/$shot $logfile")"
+   qvm-run "$appvm" "rm $APPVM_SHOTS_DIR/$uploadername"
    #qvm-run $appvm "gedit $logfile" 
    
    open_imgulr_upload_dialog_at_destination_appvm
 
-   echo $RESULT
+   echo "$RESULT"
 
    # write AppVM name and log file at AppVM to the dom0 config to open it again
    write_last_action_config
