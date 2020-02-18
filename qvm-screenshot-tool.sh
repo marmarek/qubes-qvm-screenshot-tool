@@ -8,9 +8,10 @@
 
 version="0.7beta"
 DOM0_SHOTS_DIR=$HOME/Pictures
-APPVM_SHOTS_DIR=/home/user/Pictures
-QUBES_DOM0_APPVMS=/var/lib/qubes/appvms/
-IMGURL_LOG="imgurl.log"
+# get the Pictures path in the VM
+APPVM_SHOTS_DIR="\$(xdg-user-dir PICTURES)"
+# get home dir in the VM
+IMGURL_LOG="\$HOME/imgurl.log"
 LAST_ACTION_LOG_CONFIG="$HOME/.config/qvm-screenshot-lastaction.cfg"
 
 rightdom0dir=$(xdg-user-dir PICTURES)
@@ -89,8 +90,7 @@ write_last_action_config()
     touch "$LAST_ACTION_LOG_CONFIG"
     cat <<EOF > "$LAST_ACTION_LOG_CONFIG"
 # last app vm used to upload image
-appvm=$appvm
-logfile=$logfile
+appvm=\"$appvm\"
 EOF
 }
 
@@ -100,19 +100,21 @@ read_last_action_config()
 # shellcheck disable=SC1090
     [ -e "$LAST_ACTION_LOG_CONFIG" ] && source "$LAST_ACTION_LOG_CONFIG"
 
-    open_imgulr_upload_dialog_at_destination_appvm
 
     if [ "$appvm" == "" ]; then
         printf "Last action not available \n"
         zenity --info --modal --text "Last action not available. Please, upload some image with this AppVM first." &>/dev/null
+        exit 1
     fi
 
-    exit 1
+    open_imgulr_upload_dialog_at_destination_appvm
+
+    exit 0
 }
 
 open_imgulr_upload_dialog_at_destination_appvm()
 {
-    qvm-run "$appvm" "zenity --text-info --width=500 --height=180 --modal --filename=$logfile --text Ready"
+    qvm-run "$appvm" "zenity --text-info --width=500 --height=180 --modal --filename=\"$IMGURL_LOG\" --text Ready"
 }
 
 checkscrot()
@@ -373,37 +375,32 @@ if [ "$mode_edit" -eq 1 ]; then
 fi
 
 IFS=$IFSDEFAULT
-choiceappvm=$(ls $QUBES_DOM0_APPVMS |sed 's/\([^ ]*\)/FALSE \1 /g')
+choiceappvm=$(qvm-ls --raw-list |sed 's/\([^ ]*\)/FALSE \1 /g')
 #appvm=`kdialog --radiolist "Select destination AppVM" $choice --title "$program"`
 if [ "$appvm" = "" ] ; then
     # shellcheck disable=SC2086
-    appvm=$(zenity --list --modal  --width=200 --height=390  --text "Select destination AppVM (unix based):" --radiolist --column "Pick" --column "AppVM" $choiceappvm t)
+    appvm=$(zenity --list --modal  --width=200 --height=390  --text "Select destination AppVM (unix based):" --radiolist --column "Pick" --column "AppVM" $choiceappvm)
 fi
 #echo $appvm
 
 if [ X"$appvm" != X"" ]; then
 
 echo "[-] start AppVM: $appvm"
-untrusted_destdir=$(qvm-run -a --pass-io "$appvm" "xdg-user-dir PICTURES")
-if [[ "$untrusted_destdir" =~ ^/home/user* ]]; then
-    # XXX
-    APPVM_SHOTS_DIR=$untrusted_destdir
-fi
 
-qvm-run "$appvm" "mkdir -p $APPVM_SHOTS_DIR"
-
-if [ $mode_nautilus -eq 1 ]; then
-    echo "[-] running nautilus in AppVM"
-    qvm-run "$appvm" "nautilus $APPVM_SHOTS_DIR"
-    sleep 1
-fi
+qvm-run "$appvm" "mkdir -p \"$APPVM_SHOTS_DIR\""
 
 shot=$shotslist
 
-echo "[-] copying screenshot to $APPVM_SHOTS_DIR/$shot"
+echo "[-] copying screenshot to \"$APPVM_SHOTS_DIR\"/$shot"
 qvm-run --pass-io "$appvm" "cat > \"$APPVM_SHOTS_DIR/$shot\"" < "$DOM0_SHOTS_DIR/$shot"
 
 [[ $mode_not_delete_screen_at_dom -eq 0 ]] && rm -f "$DOM0_SHOTS_DIR/$shot" && echo "[+] Screen at dom0 deleted $DOM0_SHOTS_DIR/$shot"
+
+if [ $mode_nautilus -eq 1 ]; then
+    echo "[-] running nautilus in AppVM"
+    qvm-run "$appvm" "nautilus \"$APPVM_SHOTS_DIR\""
+fi
+
 [[ $mode_onlyupload -eq 1 ]] && exit 1
 
 
@@ -413,16 +410,13 @@ echo "[-] copying imgurl uploader to AppVM $appvm"
 #      echo $UPLOADHELPER \
 #          | qvm-run --pass-io $appvm "echo $UPLOADHELPER > $APPVM_SHOTS_DIR/autouplodertemp.sh"
 uploadername='evauploadermgur.sh'
-logfile="$APPVM_SHOTS_DIR/$IMGURL_LOG"
-echo "$UPLOADHELPER" | qvm-run --pass-io "$appvm" "cat > $APPVM_SHOTS_DIR/$uploadername"
-qvm-run --pass-io "$appvm" "chmod +x $APPVM_SHOTS_DIR/$uploadername"
-RESULT=$(qvm-run --pass-io "$appvm" "$APPVM_SHOTS_DIR/$uploadername $APPVM_SHOTS_DIR/$shot $logfile")
-qvm-run "$appvm" "rm $APPVM_SHOTS_DIR/$uploadername"
-#qvm-run $appvm "gedit $logfile"
+echo "$UPLOADHELPER" | qvm-run --pass-io "$appvm" "cat > \"$APPVM_SHOTS_DIR/$uploadername\""
+qvm-run "$appvm" "chmod +x \"$APPVM_SHOTS_DIR/$uploadername\""
+qvm-run --pass-io "$appvm" "$APPVM_SHOTS_DIR/$uploadername \"$APPVM_SHOTS_DIR/$shot\" \"$IMGURL_LOG\""
+qvm-run "$appvm" "rm \"$APPVM_SHOTS_DIR/$uploadername\""
+#qvm-run $appvm "gedit \"$IMGURL_LOG\""
 
 open_imgulr_upload_dialog_at_destination_appvm
-
-echo "$RESULT"
 
 # write AppVM name and log file at AppVM to the dom0 config to open it again
 write_last_action_config
